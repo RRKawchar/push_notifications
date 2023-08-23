@@ -1,3 +1,4 @@
+import 'package:app_settings/app_settings.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 
 class NotificationService{
@@ -22,6 +23,7 @@ void requestNotificationPermission()async{
     print("User provisional permission granted");
 
   }else{
+    AppSettings.openAppSettings();
     print("User Denied Permission");
   }
 }

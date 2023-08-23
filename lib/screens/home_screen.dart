@@ -9,17 +9,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  NotificationService notificationService=NotificationService();
+  NotificationService notificationService = NotificationService();
   @override
   void initState() {
     notificationService.requestNotificationPermission();
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-body: Center(child: Text("RRK"),),
-
+      body: Center(
+        child: Text("RRK"),
+      ),
     );
   }
 }
