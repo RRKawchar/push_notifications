@@ -1,6 +1,9 @@
 import 'dart:convert';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_push_notification/firebase_helper/firebase_helper.dart';
 import 'package:flutter_push_notification/services/notification_service.dart';
 import 'package:http/http.dart' as http;
 
@@ -12,33 +15,58 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  NotificationService notificationService = NotificationService();
+  NotificationServices notificationService = NotificationServices();
+  FirebaseHelper firebaseHelper=FirebaseHelper();
+  final FirebaseFirestore firestore=FirebaseFirestore.instance;
   @override
   void initState() {
     notificationService.requestNotificationPermission();
     notificationService.getDeviceToken();
+    notificationService.foregroundMessage();
     notificationService.setupInteractMessage(context);
-    notificationService.createNotification(context);
+    notificationService.firebaseInit(context);
     super.initState();
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Center(
+        child: TextButton(
+          onPressed: () {
+            sendNotification();
+          },
+          child: const Text("Send Notification"),
+        ),
+      ),
+    );
+  }
+
+
+
   Future<void> sendNotification() async {
     try {
-      var deviceToken = await notificationService.getDeviceToken();
-      if (deviceToken != null) {
-        var data = {
-          'to':'cGwvg6YNTeaQNC9lN6jiQc:APA91bF2zNiHoRbxX1Yc0giR77ug4yuEIXOWj-ebotebkLa2s_Sh6kOl0UVBVLDvCDav8ubQlczjuUjfBvtm_GfTvKAv37EkpQDi1fLsy_IqGY2SS-8iY72-S6OIYe92PkVfEM4Dgfjp',
-           'priority':'high',
+      var deviceTokens = await firebaseHelper.getAllDeviceTokens();
+
+      if (deviceTokens.isNotEmpty) {
+        var body = {
+          'registration_ids': deviceTokens, // Use 'registration_ids' for multiple devices.
+          'priority': 'high',
           'notification': {
             'title': 'I am a Software Engineer',
             'body':
             'Highly skilled Flutter app developer with a strong passion for creating innovative and user-friendly mobile applications. Problem-solving abilities, and effective communication skills contribute to my success as a Flutter app developer.',
-           'image':'https://cdn2.vectorstock.com/i/1000x1000/23/91/small-size-emoticon-vector-9852391.jpg'
           },
-          'data':{
-            'type':'message',
-            'id':'rrk123'
+          'data': {
+            'type': 'message',
+            'id': 'rrk123',
+            'image':
+            'https://cdn2.vectorstock.com/i/1000x1000/23/91/small-size-emoticon-vector-9852391.jpg',
+            "date": "26/08/2023",
+            "name": "Riyazur Rohman Kawchar",
+            "title2": "Software Engineer"
           },
+          "category": "News"
         };
 
         var headers = {
@@ -49,7 +77,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
         var response = await http.post(
           Uri.parse("https://fcm.googleapis.com/fcm/send"),
-          body: jsonEncode(data),
+          body: jsonEncode(body),
           headers: headers,
         );
 
@@ -59,23 +87,11 @@ class _HomeScreenState extends State<HomeScreen> {
           print("Failed to send notification. Status code: ${response.statusCode}");
         }
       } else {
-        print("Device token is null. Cannot send notification.");
+        print("Device tokens are empty. Cannot send notification.");
       }
     } catch (e) {
       print("Error sending notification: $e");
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-          child: TextButton(
-        onPressed: () {
-        sendNotification();
-        },
-        child: const Text("Send Notification"),
-      )),
-    );
-  }
 }
